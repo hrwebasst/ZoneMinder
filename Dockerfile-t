@@ -16,19 +16,15 @@ RUN apt-get update && apt-get install -y \
 	mysql-server libvlc-dev libvlc5 libvlccore-dev libvlccore7 vlc-data libcurl4-openssl-dev \
 	libavformat-dev libswscale-dev libavutil-dev libavcodec-dev libavfilter-dev \
 	libavresample-dev libavdevice-dev libpostproc-dev libv4l-dev libtool libnetpbm10-dev \
-	libmime-lite-perl dh-autoreconf dpatch php5-dev nano dh-make-php git && \
-	pecl install timezonedb && apt-get clean && \
-  rm -rf /tmp/* /var/tmp/* && rm -rf /var/lib/apt/lists/*
-
-# installed the timezonedb cuz php is stupid and zoneminder is even dumber for it's weird folder structure
+	libmime-lite-perl dh-autoreconf dpatch
 
 # Copy local code into our container
-RUN git clone https://github.com/ZoneMinder/ZoneMinder.git /ZoneMinder
+ADD . /ZoneMinder
 
 # Change into the ZoneMinder directory
 WORKDIR /ZoneMinder
 
-RUN git submodule update --init --recursive && cmake .
+RUN cmake .
 
 # Build ZoneMinder
 RUN make
@@ -40,13 +36,11 @@ RUN make install
 RUN ./zmlinkcontent.sh
 
 # Fix cgi-bin missing link
-#RUN ln -s /ZoneMinder/src/nph-zms /usr/lib/cgi-bin/
+RUN ln -s /ZoneMinder/src/nph-zms /usr/lib/cgi-bin/
+
 RUN ln -s /usr/local/share/zoneminder/www /var/www/zm
 #without this the folder structure will be created wrong passing the TZ env doesn't fix
 RUN echo "America/Los_Angeles" > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
-# Adding the start script
-ADD utils/docker/start.sh /tmp/start.sh
-
 # Adding the start script
 ADD utils/docker/start.sh /tmp/start.sh
 
@@ -61,7 +55,6 @@ RUN chown -R www-data:www-data /usr/local/share/zoneminder/
 ADD utils/docker/apache-vhost /etc/apache2/sites-available/000-default.conf
 ADD utils/docker/phpdate.ini /etc/php5/apache2/conf.d/25-phpdate.ini
 
-ADD utils/docker/db_init.sh /ZoneMinder/utils/docker/db_init.sh
 RUN utils/docker/db_init.sh
 
 # Set the root passwd

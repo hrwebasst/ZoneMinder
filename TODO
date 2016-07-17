@@ -1,2 +1,9 @@
-Please see README.md file.
+# TODO
 
+* use real init or supervisord
+* update to xenial
+* docker-compose for ssl with nginx proxy
+* figure out if api is hardcoded for /zm*
+* stop being irritated about a filesystem being used as a database
+* split out db
+* Look into alpine to reduce bloat and building with docker-compose then importing
